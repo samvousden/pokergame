@@ -1,0 +1,39 @@
+app = "pokergame-server"   # change this to your chosen app name on fly.io
+primary_region = "ord"     # pick your closest region: ord=Chicago, iad=Virginia, lhr=London, etc.
+
+[build]
+  dockerfile = "../../Dockerfile"   # relative to this file (packages/server/fly.toml)
+
+[env]
+  PORT  = "5000"
+  HOST  = "0.0.0.0"
+  # Set FRONTEND_URLS via:  flyctl secrets set FRONTEND_URLS="https://yourfrontend.com"
+
+[[services]]
+  internal_port = 5000
+  protocol      = "tcp"
+
+  [[services.ports]]
+    port     = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port     = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type       = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+  [[services.tcp_checks]]
+    interval    = "15s"
+    timeout     = "2s"
+    grace_period = "5s"
+
+  [[services.http_checks]]
+    interval    = "15s"
+    timeout     = "2s"
+    grace_period = "5s"
+    method      = "GET"
+    path        = "/health"
