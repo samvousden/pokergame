@@ -1,39 +1,36 @@
-app = "pokergame-server"   # change this to your chosen app name on fly.io
-primary_region = "ord"     # pick your closest region: ord=Chicago, iad=Virginia, lhr=London, etc.
+app            = "pokergame-server"  # change to your chosen Fly app name
+primary_region = "ord"               # ord=Chicago, iad=Virginia, lhr=London, sin=Singapore
 
 [build]
-  dockerfile = "../../Dockerfile"   # relative to this file (packages/server/fly.toml)
+  dockerfile = "../../Dockerfile"
 
 [env]
-  PORT  = "5000"
-  HOST  = "0.0.0.0"
-  # Set FRONTEND_URLS via:  flyctl secrets set FRONTEND_URLS="https://yourfrontend.com"
+  PORT = "5000"
+  HOST = "0.0.0.0"
+  # FRONTEND_URLS is set via secrets — run:
+  #   flyctl secrets set FRONTEND_URLS="https://main.xxxx.amplifyapp.com"
 
-[[services]]
-  internal_port = 5000
-  protocol      = "tcp"
+[http_service]
+  internal_port        = 5000
+  force_https          = true
+  auto_stop_machines   = false  # keep alive so socket connections aren't dropped
+  auto_start_machines  = true
+  min_machines_running = 1
 
-  [[services.ports]]
-    port     = 80
-    handlers = ["http"]
-
-  [[services.ports]]
-    port     = 443
-    handlers = ["tls", "http"]
-
-  [services.concurrency]
+  [http_service.concurrency]
     type       = "connections"
     hard_limit = 100
     soft_limit = 80
 
-  [[services.tcp_checks]]
-    interval    = "15s"
-    timeout     = "2s"
-    grace_period = "5s"
+[[vm]]
+  memory = "512mb"
+  cpus   = 1
 
-  [[services.http_checks]]
-    interval    = "15s"
-    timeout     = "2s"
-    grace_period = "5s"
-    method      = "GET"
-    path        = "/health"
+[checks]
+  [checks.health]
+    port     = 5000
+    type     = "http"
+    interval = "15s"
+    timeout  = "5s"
+    method   = "GET"
+    path     = "/health"

@@ -3,14 +3,21 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install
+        # Install all workspace dependencies from the repo root
+        - cd ../../ && npm install --legacy-peer-deps
     build:
       commands:
-        - npm run build
+        # Build shared package first (client depends on it)
+        - cd ../../ && npm run build --workspace=packages/shared
+        # Build client
+        - cd ../../ && npm run build --workspace=packages/client
   artifacts:
-    baseDirectory: dist
+    # Amplify runs from repo root, so path is relative to root
+    baseDirectory: packages/client/dist
     files:
       - '**/*'
   cache:
     paths:
       - node_modules/**/*
+      - packages/shared/node_modules/**/*
+      - packages/client/node_modules/**/*
