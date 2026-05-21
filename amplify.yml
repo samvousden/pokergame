@@ -4,10 +4,10 @@ applications:
       phases:
         preBuild:
           commands:
-            - npm install --legacy-peer-deps        build:
+            - npm install --legacy-peer-deps
+        build:
           commands:
             - npm run build --workspace=packages/shared
-            # Print to confirm Amplify is passing the env var into the build
             - echo "VITE_SOCKET_URL=$VITE_SOCKET_URL"
             - npm run build --workspace=packages/client
       artifacts:
