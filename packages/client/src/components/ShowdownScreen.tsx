@@ -55,25 +55,33 @@ export const ShowdownScreen: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
-
-          <div className="all-players-cards">
-            <h3>All Players' Hands</h3>
+          )}          <div className="all-players-cards">
+            <h3>Hands Revealed</h3>
             <div className="players-hands-grid">
               {gameState.players
                 .filter(player => allPlayerCards?.has(player.id))
-                .map(player => (
-                <div key={player.id} className={`player-hand ${winnerIds.includes(player.id) ? 'winner' : ''}`}>
-                  <h4>{player.name}</h4>
-                  <div className="hole-cards-display">
-                    {allPlayerCards?.get(player.id)!.map((card, i) => (
-                      <CardDisplay key={i} card={card} className="hole-card" mode="string" />
-                    ))}
-                  </div>
-                  <p className="stack-info">Stack: ${player.stack}</p>
-                  {winnerIds.includes(player.id) && <p className="winner-badge">WINNER</p>}
-                </div>
-              ))}
+                .map(player => {
+                  const cards = allPlayerCards!.get(player.id)!;
+                  const isWinner = winnerIds.includes(player.id);
+                  let handName: string | null = null;
+                  try {
+                    const result = evaluateBestHandWithCards(cards, gameState.board);
+                    handName = getHandRankingName(result.ranking);
+                  } catch { /* ignore */ }
+                  return (
+                    <div key={player.id} className={`player-hand ${isWinner ? 'winner' : ''}`}>
+                      <h4>{player.name}</h4>
+                      <div className="hole-cards-display">
+                        {cards.map((card, i) => (
+                          <CardDisplay key={i} card={card} className="hole-card" mode="string" />
+                        ))}
+                      </div>
+                      {handName && <p className="hand-rank-label">{handName}</p>}
+                      <p className="stack-info">Stack: ${player.stack}</p>
+                      {isWinner && <p className="winner-badge">WINNER</p>}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </>

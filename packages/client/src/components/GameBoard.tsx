@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { CardDisplay } from './CardDisplay';
 import { PlayerSeat } from './PlayerSeat';
 import { CommunityCards } from './CommunityCards';
 import { ActionPanel } from './ActionPanel';
 import { ItemBag } from './ItemBag';
+import { evaluateBestHandWithCards, getHandRankingName } from '@poker/shared';
 
 export const GameBoard: React.FC = () => {
   const { gameState, playerId, holeCards } = useGame();
@@ -12,6 +13,17 @@ export const GameBoard: React.FC = () => {
   if (!gameState || !playerId) {
     return <div>Loading...</div>;
   }
+
+  // Compute current player's best hand rank when they have hole cards + at least some board
+  const myHandRankName = useMemo(() => {
+    if (!holeCards || holeCards.length < 2 || gameState.board.length < 3) return null;
+    try {
+      const result = evaluateBestHandWithCards(holeCards, gameState.board);
+      return getHandRankingName(result.ranking);
+    } catch {
+      return null;
+    }
+  }, [holeCards, gameState.board]);
 
   return (
     <div className="game-board-layout">
@@ -35,9 +47,7 @@ export const GameBoard: React.FC = () => {
           )}
         </div>
 
-        <CommunityCards cards={gameState.board} />
-
-        <div className="players-table">
+        <CommunityCards cards={gameState.board} />        <div className="players-table">
           {gameState.players.map(player => (
             <PlayerSeat
               key={player.id}
@@ -47,6 +57,7 @@ export const GameBoard: React.FC = () => {
               turnDeadline={gameState.turnDeadline}
               totalSeconds={gameState.timerSettings?.bettingSeconds ?? 30}
               isMultiplayer={gameState.gameMode === 'multiplayer'}
+              handRankName={player.id === playerId ? myHandRankName : null}
             />
           ))}
         </div>

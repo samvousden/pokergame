@@ -296,13 +296,14 @@ function handleShowdown(): void {
   
   if (foldedOut) {
     // Fold-out win: don't send hole cards
-    io.emit('showdown', { cards: {}, winnerId: gameManager.getWinnerId(), winnerIds: gameManager.getWinnerIds(), foldedOut: true });
-  } else {
-    // Regular showdown: send all hole cards, resolving jokers to their optimal card
+    io.emit('showdown', { cards: {}, winnerId: gameManager.getWinnerId(), winnerIds: gameManager.getWinnerIds(), foldedOut: true });  } else {
+    // Regular showdown: send hole cards for non-folded players only, resolving jokers
     const allCards: { [playerId: number]: any[] } = {};
     const boardCards = currentState.board;
     const allHoleCards = gameManager.getAllHoleCards();
     allHoleCards.forEach((cards, pid) => {
+      const player = currentState.players.find(p => p.id === pid);
+      if (player?.hasFolded) return; // folded players' cards stay hidden
       const hasJoker = cards.some(c => isJokerCard(c));
       allCards[pid] = hasJoker ? resolveJokersForShowdown(cards, boardCards) : cards;
     });
