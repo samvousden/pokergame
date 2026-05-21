@@ -13,12 +13,22 @@ const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL ||
   .map(origin => origin.trim())
   .filter(Boolean);
 
+function normalizeOrigin(origin: string): string {
+  // Strip trailing slash and lowercase for consistent comparison
+  return origin.replace(/\/$/, '').toLowerCase();
+}
+
 function isOriginAllowed(origin?: string): boolean {
   if (!origin) {
     // Non-browser tools (health checks/curl) often omit Origin.
     return true;
   }
-  return allowedOrigins.includes(origin);
+  const normalized = normalizeOrigin(origin);
+  const allowed = allowedOrigins.map(normalizeOrigin).some(o => o === normalized);
+  if (!allowed) {
+    console.warn(`[CORS] Blocked origin: "${origin}". Allowed: ${allowedOrigins.join(', ')}`);
+  }
+  return allowed;
 }
 
 const corsOriginValidator = (
@@ -297,6 +307,10 @@ function handleShowdown(): void {
 }
 
 // REST endpoints
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', service: 'pokergame-server' });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
