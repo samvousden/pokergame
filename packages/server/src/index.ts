@@ -46,6 +46,11 @@ const io = new SocketIOServer(httpServer, {
     origin: '*',  // DEBUG: open to all — tighten after confirming connection works
     methods: ['GET', 'POST'],
   },
+  // Fly.io proxy: skip polling, use WebSocket only to avoid sticky session 400s
+  transports: ['websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 
 app.use(cors({ origin: '*' }));  // DEBUG: open to all

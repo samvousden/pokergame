@@ -94,14 +94,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('VITE_SOCKET_URL is not set. Falling back to current origin for Socket.io:', serverUrl);
     }
   }, [isLocalBrowser, serverUrl]);  useEffect(() => {
-    console.log('[Socket] Connecting to:', serverUrl);
-    const newSocket = io(serverUrl, {
+    console.log('[Socket] Connecting to:', serverUrl);    const newSocket = io(serverUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5,
-      // Allow polling first so Fly.io proxy can complete the upgrade handshake
-      transports: ['polling', 'websocket'],
+      // Skip polling entirely — Fly.io's proxy causes 400s on follow-up poll requests
+      // because they get routed to different edge nodes (sticky session problem).
+      // WebSocket maintains a single persistent connection and avoids this entirely.
+      transports: ['websocket'],
     });
 
     newSocket.on('connect_error', (err) => {
